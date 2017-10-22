@@ -159,8 +159,8 @@ def irfanet(eeg_length,num_classes, kernel_size):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1))(x)
 		
 	model = Model(EEG_input, x)
-	#model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_221017/2weights.23-0.7938.hdf5',by_name=False)
-	adm = Adam(lr=1e-3, decay=0)
+	model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_221017/weights.12-0.7788.hdf5',by_name=False)
+	adm = Adam(lr=1e-4, decay=1e-6)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	
 	return model
@@ -205,7 +205,7 @@ if __name__ == '__main__':
 	
 	model = irfanet(eeg_length=eeg_length,num_classes=num_classes, kernel_size=kernel_size)
 	#plot_model(model, to_file='model.png', show_shapes=True, show_layer_names=False, rankdir='TB')
-	mdlchk=ModelCheckpoint(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_221017/weights.{epoch:02d}-{val_acc:.4f}.hdf5',monitor='val_acc',save_best_only=False,mode='max')
+	mdlchk=ModelCheckpoint(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_221017/3weights.{epoch:02d}-{val_acc:.4f}.hdf5',monitor='val_acc',save_best_only=False,mode='max')
 	tensbd=TensorBoard(log_dir='./logs221017',batch_size=batch_size)
 	csv_logger = CSVLogger('training_logs221017.log',separator=',', append=True )
 	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=4, min_lr=0.00001)
