@@ -2,7 +2,7 @@ import numpy as np
 import copy
 from scipy.io import loadmat, savemat, whosmat
 
-from keras.layers import Input, Dense, Conv1D, MaxPooling1D, Flatten, Activation, add, Dropout, merge
+from keras.layers import Input, Dense, Conv1D, MaxPooling1D, Flatten, Activation, add, Dropout, merge, UpSampling1D
 from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -131,7 +131,8 @@ def irfanet(eeg_length,num_classes, kernel_size):
 	eps = 1.1e-5
 	
 	EEG_input = Input(shape=(eeg_length,1))
-	x = Conv1D(filters=64,kernel_size=kernel_size,padding='same',use_bias=False)(EEG_input) ##
+	x = UpSampling1D(size=2)(EEG_input)
+	x = Conv1D(filters=64,kernel_size=kernel_size,padding='same',use_bias=False)(x) ##
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
