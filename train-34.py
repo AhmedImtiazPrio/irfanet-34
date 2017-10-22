@@ -205,9 +205,9 @@ if __name__ == '__main__':
 	
 	model = irfanet(eeg_length=eeg_length,num_classes=num_classes, kernel_size=kernel_size)
 	#plot_model(model, to_file='model.png', show_shapes=True, show_layer_names=False, rankdir='TB')
-	mdlchk=ModelCheckpoint(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_231017/weights.{epoch:02d}-{train_acc:.4f}-{val_acc:.4f}.hdf5',monitor='val_acc',save_best_only=False,mode='max')
-	tensbd=TensorBoard(log_dir='./logs221017',batch_size=batch_size)
-	csv_logger = CSVLogger('training_logs221017.log',separator=',', append=True )
+	mdlchk=ModelCheckpoint(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_231017/weights.{epoch:02d}-{val_acc:.4f}.hdf5',monitor='val_acc',save_best_only=False,mode='max')
+	tensbd=TensorBoard(log_dir='./logs231017',batch_size=batch_size)
+	csv_logger = CSVLogger('training_logs231017.log',separator=',', append=True )
 	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=4, min_lr=0.00001)
 
 	model.fit(x_train,y_train,
