@@ -79,6 +79,13 @@ class Scale(Layer):
         base_config = super(Scale, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
+def compute_weight(Y,classes):
+		num_samples=len(Y)
+		n_classes=len(classes)
+		num_bin=np.bincount(Y[:,0])
+		class_weights={i:(num_samples/(n_classes*num_bin[i])) for i in range(6)}
+		return class_weights
+
 
 def res_subsam(input_tensor,filters,kernel_size,subsam):
 	eps= 1.1e-5
@@ -160,15 +167,15 @@ def irfanet(eeg_length,num_classes, kernel_size):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1))(x)
 	
 	model = Model(EEG_input, x)
-	#model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_231017/2weights.09-0.8048.hdf5',by_name=False)
-	adm = Adamax(lr=1e-3, decay=1e-6)
+	model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_241017/weights.08-0.6371.hdf5',by_name=False)
+	adm = Adamax(lr=1e-4, decay=1e-6)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy', top_k_categorical_accuracy])
 	return model
 
 if __name__ == '__main__':
 	
 	num_classes = 6
-	batch_size = 8 #8
+	batch_size = 32 #8
 	epochs = 200
 	file_name = 'eog_rk_new_notrans_234rejects_relabeled.mat'
 	eeg_length = 3000
@@ -208,9 +215,12 @@ if __name__ == '__main__':
 	mdlchk=ModelCheckpoint(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_241017/weights.{epoch:02d}-{val_acc:.4f}.hdf5',monitor='val_acc',save_best_only=False,mode='max')
 	tensbd=TensorBoard(log_dir='./logs241017',batch_size=batch_size)
 	csv_logger = CSVLogger('training_logs241017.log',separator=',', append=True )
-	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=4, min_lr=0.0001)
+	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=4, min_lr=0.00001)
 
-	class_weight={0:3.3359,1:0.3368,2:3.0813,3:2.7868,4:0.7300,5:1.4757}
+	#class_weight={0:3.3359,1:0.3368,2:3.0813,3:2.7868,4:0.7300,5:1.4757}
+	class_weight=compute_weight(y__train,np.unique(y__train))
+	print(class_weight)
+	
 	model.fit(x_train,y_train,
 	 batch_size=batch_size,
 	 epochs=epochs,
