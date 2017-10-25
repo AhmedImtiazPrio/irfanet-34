@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from datetime import date
 from scipy.io import loadmat, savemat, whosmat
 from keras import initializers
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, Flatten, Activation, add, Dropout, merge
@@ -93,13 +94,13 @@ def res_subsam(input_tensor,filters,kernel_size,subsam):
 	x = BatchNormalization(epsilon=eps, axis=-1)(input_tensor)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.25,seed=1)(x)
+	x = Dropout(rate=0.5,seed=1)(x)
 	x = Conv1D(filters=nb_filter1,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias)(x) ##
 	x = MaxPooling1D(pool_size=subsam)(x)
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.25,seed=1)(x)
+	x = Dropout(rate=0.5,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias)(x) ##	
 	short = Conv1D(filters=nb_filter2,kernel_size=kernel_size,padding='same',use_bias=bias)(input_tensor)
 	short = MaxPooling1D(pool_size=subsam)(short)
@@ -112,12 +113,12 @@ def res_nosub(input_tensor,filters,kernel_size):
 	x = BatchNormalization(epsilon=eps, axis=-1)(input_tensor)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.25,seed=1)(x)
+	x = Dropout(rate=0.5,seed=1)(x)
 	x = Conv1D(filters=nb_filter1,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias)(x) ##
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.25,seed=1)(x)
+	x = Dropout(rate=0.5,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias)(x) ##	
 	x = add([x,input_tensor])
 	return x
@@ -129,7 +130,7 @@ def res_first(input_tensor,filters,kernel_size):
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.25,seed=1)(x)
+	x = Dropout(rate=0.5,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias)(x) ##	
 	x = add([x,input_tensor])
 	return x
@@ -167,15 +168,15 @@ def irfanet(eeg_length,num_classes, kernel_size):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1))(x)
 	
 	model = Model(EEG_input, x)
-	model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_241017/weights.08-0.6371.hdf5',by_name=False)
-	adm = Adamax(lr=1e-4, decay=1e-6)
-	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy', top_k_categorical_accuracy])
+	model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-25/2weights.02-0.6555.hdf5',by_name=False)
+	adm = Adamax(lr=1e-3, decay=1e-6)
+	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
 if __name__ == '__main__':
 	
 	num_classes = 6
-	batch_size = 32 #8
+	batch_size = 8 #8
 	epochs = 200
 	file_name = 'eog_rk_new_notrans_234rejects_relabeled.mat'
 	eeg_length = 3000
@@ -194,7 +195,7 @@ if __name__ == '__main__':
 	x_train, x_test, y__train, y__test = train_test_split(X,Y,test_size=0.2, random_state=1)
 	x_train = np.reshape(x_train,(x_train.shape[0],3000,1))
 	x_test = np.reshape(x_test,(x_test.shape[0],3000,1))
-
+	
 	#Use alternate epochs 
 	#A = np.reshape(X,(47237,3000,1))
 	#x_test = A[::2,:,:]
@@ -205,6 +206,10 @@ if __name__ == '__main__':
 	print('x_train shape:', x_train.shape)
 	print(x_train.shape[0], 'train samples')
 	print(x_test.shape[0], 'test samples')
+	print('Training Distribution')
+	print(np.bincount(y__train[:,0]))
+	print('Testing Distribution')
+	print(np.bincount(y__test[:,0]))
 	
 	y_train = to_categorical(y__train, num_classes)
 	y_test = to_categorical(y__test, num_classes)
@@ -212,10 +217,18 @@ if __name__ == '__main__':
 	
 	model = irfanet(eeg_length=eeg_length,num_classes=num_classes, kernel_size=kernel_size)
 	#plot_model(model, to_file='model.png', show_shapes=True, show_layer_names=False, rankdir='TB')
-	mdlchk=ModelCheckpoint(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/1DCNN_241017/weights.{epoch:02d}-{val_acc:.4f}.hdf5',monitor='val_acc',save_best_only=False,mode='max')
-	tensbd=TensorBoard(log_dir='./logs241017',batch_size=batch_size)
-	csv_logger = CSVLogger('training_logs241017.log',separator=',', append=True )
-	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=4, min_lr=0.00001)
+	
+	#setting up checkpoint save directory
+	checkpoint_path=os.path.join(os.path.join(os.getcwd(),'tmp'),str(date.today()))
+	if not os.path.isdir(checkpoint_path):
+		os.makedirs(checkpoint_path)
+	save_name=checkpoint_path+'/2weights.{epoch:02d}-{val_acc:.4f}.hdf5'
+	
+	#Callbacks
+	mdlchk=ModelCheckpoint(filepath=save_name,monitor='val_acc',save_best_only=False,mode='max')
+	tensbd=TensorBoard(log_dir='./logs251017',batch_size=batch_size,write_images=True)
+	csv_logger = CSVLogger('training_logs251017.log',separator=',', append=True )
+	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=3, min_lr=0.00001,verbose=1)
 
 	#class_weight={0:3.3359,1:0.3368,2:3.0813,3:2.7868,4:0.7300,5:1.4757}
 	class_weight=compute_weight(y__train,np.unique(y__train))
@@ -228,7 +241,7 @@ if __name__ == '__main__':
 	 verbose=1,
 	 validation_data=(x_test,y_test),
 	 callbacks=[mdlchk,tensbd,csv_logger,reduce_lr],
-	 initial_epoch=0,
+	 initial_epoch=4,
 	 class_weight=class_weight
 	 )
 	 # initial_epoch:  Epoch at which to start training (useful for resuming a previous training run).
