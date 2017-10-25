@@ -102,7 +102,7 @@ def res_subsam(input_tensor,filters,kernel_size,subsam):
 	x = Activation('relu')(x)
 	x = Dropout(rate=0.5,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias)(x) ##	
-	short = Conv1D(filters=nb_filter2,kernel_size=kernel_size,padding='same',use_bias=bias)(input_tensor)
+	short = Conv1D(filters=nb_filter2,kernel_size=kernel_size,padding='same',use_bias=bias,kernel_initializer=initializers.he_normal(seed=1))(input_tensor)
 	short = MaxPooling1D(pool_size=subsam)(short)
 	x = add([x,short])
 	return x
