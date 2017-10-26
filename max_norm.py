@@ -94,13 +94,13 @@ def res_subsam(input_tensor,filters,kernel_size,subsam):
 	x = BatchNormalization(epsilon=eps, axis=-1)(input_tensor)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.5,seed=1)(x)
+	x = Dropout(rate=0.25,seed=1)(x)
 	x = Conv1D(filters=nb_filter1,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias,kernel_constraint=max_norm(maxnorm))(x) ##
 	x = MaxPooling1D(pool_size=subsam)(x)
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.5,seed=1)(x)
+	x = Dropout(rate=0.25,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias,kernel_constraint=max_norm(maxnorm))(x) ##	
 	short = Conv1D(filters=nb_filter2,kernel_size=kernel_size,padding='same',use_bias=bias,kernel_constraint=max_norm(maxnorm),kernel_initializer=initializers.he_normal(seed=1))(input_tensor) ##
 	short = MaxPooling1D(pool_size=subsam)(short)
@@ -113,12 +113,12 @@ def res_nosub(input_tensor,filters,kernel_size):
 	x = BatchNormalization(epsilon=eps, axis=-1)(input_tensor)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.5,seed=1)(x)
+	x = Dropout(rate=0.25,seed=1)(x)
 	x = Conv1D(filters=nb_filter1,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias,kernel_constraint=max_norm(maxnorm))(x) ##
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.5,seed=1)(x)
+	x = Dropout(rate=0.25,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias,kernel_constraint=max_norm(maxnorm))(x) ##	
 	x = add([x,input_tensor])
 	return x
@@ -130,7 +130,7 @@ def res_first(input_tensor,filters,kernel_size):
 	x = BatchNormalization(epsilon=eps, axis=-1)(x)
 	x = Scale(axis=-1)(x)
 	x = Activation('relu')(x)
-	x = Dropout(rate=0.5,seed=1)(x)
+	x = Dropout(rate=0.25,seed=1)(x)
 	x = Conv1D(filters=nb_filter2,kernel_initializer=initializers.he_normal(seed=1),kernel_size=kernel_size,padding='same',use_bias=bias,kernel_constraint=max_norm(maxnorm))(x) ##	
 	x = add([x,input_tensor])
 	return x
@@ -168,7 +168,7 @@ def irfanet(eeg_length,num_classes, kernel_size):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1),kernel_constraint=max_norm(maxnorm),use_bias=bias)(x) ##
 	
 	model = Model(EEG_input, x)
-	model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-25/3weights.11-0.6826.hdf5',by_name=False)
+	#model.load_weights(filepath='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-25/3weights.11-0.6826.hdf5',by_name=False)
 	adm = Adamax(lr=1e-3, decay=1e-6)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 	save_dir = os.path.join(os.getcwd(),'saved_models_keras') #os.getcwd() Return a string representing the current working directory
 	model_name = 'keras_1Dconvnet_eog_trained_model.h5'
 	bias=False
-	maxnorm=4
+	maxnorm=4.
 	
 	#use scipy.io to convert .mat to numpy array
 	mat_cont = loadmat(file_name)
@@ -223,12 +223,12 @@ if __name__ == '__main__':
 	checkpoint_path=os.path.join(os.path.join(os.getcwd(),'tmp'),str(date.today()))
 	if not os.path.isdir(checkpoint_path):
 		os.makedirs(checkpoint_path)
-	save_name=checkpoint_path+'/4weights.{epoch:02d}-{val_acc:.4f}.hdf5'
+	save_name=checkpoint_path+'/1weights.{epoch:02d}-{val_acc:.4f}.hdf5'
 	
 	#Callbacks
 	mdlchk=ModelCheckpoint(filepath=save_name,monitor='val_acc',save_best_only=False,mode='max')
-	tensbd=TensorBoard(log_dir='./logs251017(3)',batch_size=batch_size,write_images=True)
-	csv_logger = CSVLogger('training_logs251017(3).log',separator=',', append=True )
+	tensbd=TensorBoard(log_dir='./logs261017(1)',batch_size=batch_size,write_images=True)
+	csv_logger = CSVLogger('training_logs261017(1).log',separator=',', append=True )
 	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=3, min_lr=0.0001,verbose=1)
 
 	#class_weight={0:3.3359,1:0.3368,2:3.0813,3:2.7868,4:0.7300,5:1.4757}
@@ -242,9 +242,10 @@ if __name__ == '__main__':
 	 verbose=2,
 	 validation_data=(x_test,y_test),
 	 callbacks=[mdlchk,tensbd,csv_logger,reduce_lr],
-	 initial_epoch=11,
-	 class_weight=class_weight
+	 initial_epoch=0
 	 )
+	 #class_weight=class_weight
+	 #)
 	 # initial_epoch:  Epoch at which to start training (useful for resuming a previous training run).
 	 
 	pred= model.predict(x_test,batch_size=batch_size, verbose=1)
