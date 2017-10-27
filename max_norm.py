@@ -168,8 +168,8 @@ def irfanet(eeg_length,num_classes, kernel_size, load_path):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1),kernel_constraint=max_norm(maxnorm),use_bias=bias)(x) ##
 	
 	model = Model(EEG_input, x)
-	model.load_weights(filepath=load_path,by_name=False)
-	adm = Adamax(lr=1e-4, decay=1e-6)
+	#model.load_weights(filepath=load_path,by_name=False)
+	adm = Adamax(lr=1e-3, decay=1e-6)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
@@ -186,11 +186,11 @@ if __name__ == '__main__':
 	save_dir = os.path.join(os.getcwd(),'saved_models_keras') #os.getcwd() Return a string representing the current working directory
 	model_name = 'keras_1Dconvnet_eog_trained_model.h5'
 	bias=False
-	maxnorm=6.
-	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-26/2weights.06-0.7956.hdf5'
-	run_idx=3
-	dropout_rate=0.25
-	initial_epoch=6
+	maxnorm=4.
+	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-26/3weights.09-0.8069.hdf5'
+	run_idx=5
+	dropout_rate=0.2
+	initial_epoch=0
 	
 	#use scipy.io to convert .mat to numpy array
 	mat_cont = loadmat(file_name)
@@ -236,7 +236,7 @@ if __name__ == '__main__':
 	mdlchk=ModelCheckpoint(filepath=checkpoint_name,monitor='val_acc',save_best_only=False,mode='max')
 	tensbd=TensorBoard(log_dir='./'+log_name,batch_size=batch_size,write_images=True)
 	csv_logger = CSVLogger('training_'+log_name+'.log',separator=',', append=True )
-	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=3, min_lr=0.00001,verbose=1)
+	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,patience=5, min_lr=0.00001,verbose=1)
 
 	#class_weight={0:3.3359,1:0.3368,2:3.0813,3:2.7868,4:0.7300,5:1.4757}
 	class_weight=compute_weight(y__train,np.unique(y__train))
