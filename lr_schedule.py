@@ -169,15 +169,15 @@ def irfanet(eeg_length,num_classes, kernel_size, load_path):
 	
 	model = Model(EEG_input, x)
 	model.load_weights(filepath=load_path,by_name=False)
-	adm = Adamax(lr=lr, decay=1e-8)
+	adm = Adamax(lr=lr, decay=lr_decay)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
-def lr_schedule(epoch):
+def lr_schedule(epoch, lr_decay):
 	if epoch<=5:
 		lr_rate=1e-3
 	else:
-		lr_rate=1e-4
+		lr_rate=1e-4-epoch*1e-8
 	return lr_rate
 	
 		
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 	dropout_rate=0.2
 	initial_epoch=5
 	lr=1e-4
-	
+	lr_decay=1e-8
 	
 #############################################################################################################################
 	

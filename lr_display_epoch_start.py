@@ -10,7 +10,7 @@ from keras.models import Model
 from keras import initializers
 from keras.engine import Layer, InputSpec
 from keras.utils import to_categorical#, plot_model
-from keras.callbacks import ModelCheckpoint, TensorBoard, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
+from keras.callbacks import ModelCheckpoint, TensorBoard, CSVLogger, ReduceLROnPlateau, LearningRateScheduler, Callback
 import os
 from keras import backend as K
 from keras.constraints import max_norm
@@ -169,7 +169,7 @@ def irfanet(eeg_length,num_classes, kernel_size, load_path):
 	
 	model = Model(EEG_input, x)
 	model.load_weights(filepath=load_path,by_name=False)
-	adm = Adamax(lr=lr, decay=1e-8)
+	adm = Adamax(lr=lr, decay=lr_decay)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
@@ -177,9 +177,14 @@ def lr_schedule(epoch):
 	if epoch<=5:
 		lr_rate=1e-3
 	else:
-		lr_rate=1e-4
+		lr_rate=1e-4-epoch*1e-8
 	return lr_rate
-	
+
+class show_lr(Callback):
+		def on_epoch_begin(self, epoch, logs):
+			print('Learning rate:')
+			print(float(K.get_value(self.model.optimizer.lr)))
+
 		
 if __name__ == '__main__':
 	
@@ -197,11 +202,11 @@ if __name__ == '__main__':
 	bias=False
 	maxnorm=4.
 	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-28/1weights.05-0.8021.hdf5'
-	run_idx=2
+	run_idx=3
 	dropout_rate=0.2
 	initial_epoch=5
 	lr=1e-4
-	
+	lr_decay=1e-8
 	
 #############################################################################################################################
 	
@@ -249,9 +254,10 @@ if __name__ == '__main__':
 	mdlchk=ModelCheckpoint(filepath=checkpoint_name,monitor='val_acc',save_best_only=False,mode='max')
 	tensbd=TensorBoard(log_dir='./'+log_name,batch_size=batch_size,write_images=True)
 	csv_logger = CSVLogger('training_'+log_name+'.log',separator=',', append=True )
-	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5,patience=3, min_lr=0.00001,verbose=1)
+	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=lr_reduce_factor,patience=patience, min_lr=0.00001,verbose=1)
 	lr_=LearningRateScheduler(lr_schedule)
-
+	lr_print=show_lr()
+	
 	#class_weight={0:3.3359,1:0.3368,2:3.0813,3:2.7868,4:0.7300,5:1.4757}
 	class_weight=compute_weight(y__train,np.unique(y__train))
 	print(class_weight)
@@ -262,7 +268,7 @@ if __name__ == '__main__':
 	 shuffle=True,
 	 verbose=2,
 	 validation_data=(x_test,y_test),
-	 callbacks=[mdlchk,tensbd,csv_logger,reduce_lr],
+	 callbacks=[mdlchk,tensbd,csv_logger, lr_print, reduce_lr],
 	 initial_epoch=initial_epoch
 	 )
 	 #class_weight=class_weight
