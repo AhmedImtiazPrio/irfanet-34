@@ -168,8 +168,8 @@ def irfanet(eeg_length,num_classes, kernel_size, load_path):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1),kernel_constraint=max_norm(maxnorm),use_bias=bias)(x) ##
 	
 	model = Model(EEG_input, x)
-	#model.load_weights(filepath=load_path,by_name=False)
-	adm = Adamax(lr=lr, decay=1e-6)
+	model.load_weights(filepath=load_path,by_name=False)
+	adm = Adamax(lr=lr, decay=1e-8)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
