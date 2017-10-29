@@ -216,7 +216,7 @@ if __name__ == '__main__':
 	 verbose=1,
 	 validation_data=(x_test,y_test),
 	 callbacks=[mdlchk,tensbd,csv_logger,reduce_lr],
-	 initial_epoch=0
+	 initial_epoch=14
 	 )
 	 # initial_epoch:  Epoch at which to start training (useful for resuming a previous training run).
 	 

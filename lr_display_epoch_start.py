@@ -4,7 +4,7 @@ from datetime import date
 from scipy.io import loadmat, savemat, whosmat
 from keras import initializers
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, Flatten, Activation, add, Dropout, merge
-from keras.optimizers import Adamax
+from keras.optimizers import Nadam
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from keras import initializers
@@ -168,8 +168,8 @@ def irfanet(eeg_length,num_classes, kernel_size, load_path):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1),kernel_constraint=max_norm(maxnorm),use_bias=bias)(x) ##
 	
 	model = Model(EEG_input, x)
-	model.load_weights(filepath=load_path,by_name=False)
-	adm = Adamax(lr=lr, decay=lr_decay)
+	model.load_weights(filepath=load_path,by_name=False) ### LOAD WEIGHTS
+	adm = Nadam(lr=lr)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
@@ -201,12 +201,16 @@ if __name__ == '__main__':
 	model_name = 'keras_1Dconvnet_eog_trained_model.h5'
 	bias=False
 	maxnorm=4.
-	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-28/1weights.05-0.8021.hdf5'
-	run_idx=3
+	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-29/3weights.13-0.8191.hdf5'
+	run_idx=4
 	dropout_rate=0.2
-	initial_epoch=5
-	lr=1e-4
+	initial_epoch=14
+	lr=5*1e-5
 	lr_decay=1e-8
+	lr_reduce_factor=0.5 
+	patience=4 #for reduceLR
+	cooldown=0 #for reduceLR
+	
 	
 #############################################################################################################################
 	
@@ -254,7 +258,7 @@ if __name__ == '__main__':
 	mdlchk=ModelCheckpoint(filepath=checkpoint_name,monitor='val_acc',save_best_only=False,mode='max')
 	tensbd=TensorBoard(log_dir='./'+log_name,batch_size=batch_size,write_images=True)
 	csv_logger = CSVLogger('training_'+log_name+'.log',separator=',', append=True )
-	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=lr_reduce_factor,patience=patience, min_lr=0.00001,verbose=1)
+	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=lr_reduce_factor,patience=patience, min_lr=0.00001,verbose=1,cooldown=cooldown)
 	lr_=LearningRateScheduler(lr_schedule)
 	lr_print=show_lr()
 	
@@ -268,7 +272,7 @@ if __name__ == '__main__':
 	 shuffle=True,
 	 verbose=2,
 	 validation_data=(x_test,y_test),
-	 callbacks=[mdlchk,tensbd,csv_logger, lr_print, reduce_lr],
+	 callbacks=[mdlchk,tensbd,csv_logger, lr_print], #reduce_lr],
 	 initial_epoch=initial_epoch
 	 )
 	 #class_weight=class_weight
