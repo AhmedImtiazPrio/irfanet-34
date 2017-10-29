@@ -201,11 +201,11 @@ if __name__ == '__main__':
 	model_name = 'keras_1Dconvnet_eog_trained_model.h5'
 	bias=False
 	maxnorm=4.
-	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-29/3weights.13-0.8191.hdf5'
-	run_idx=4
+	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-29/4weights.20-0.8196.hdf5'
+	run_idx=5
 	dropout_rate=0.2
-	initial_epoch=14
-	lr=5*1e-5
+	initial_epoch=21
+	lr=2*1e-5
 	lr_decay=1e-8
 	lr_reduce_factor=0.5 
 	patience=4 #for reduceLR
@@ -256,8 +256,8 @@ if __name__ == '__main__':
 		
 	#Callbacks
 	mdlchk=ModelCheckpoint(filepath=checkpoint_name,monitor='val_acc',save_best_only=False,mode='max')
-	tensbd=TensorBoard(log_dir='./'+log_name,batch_size=batch_size,write_images=True)
-	csv_logger = CSVLogger('training_'+log_name+'.log',separator=',', append=True )
+	tensbd=TensorBoard(log_dir='./logs/'+log_name,batch_size=batch_size,write_images=True)
+	csv_logger = CSVLogger('./logs/training_'+log_name+'.log',separator=',', append=True )
 	reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=lr_reduce_factor,patience=patience, min_lr=0.00001,verbose=1,cooldown=cooldown)
 	lr_=LearningRateScheduler(lr_schedule)
 	lr_print=show_lr()
