@@ -205,7 +205,7 @@ if __name__ == '__main__':
 	run_idx=5
 	dropout_rate=0.2
 	initial_epoch=21
-	lr=2*1e-5
+	lr=1e-5
 	lr_decay=1e-8
 	lr_reduce_factor=0.5 
 	patience=4 #for reduceLR
