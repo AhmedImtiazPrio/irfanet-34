@@ -4,7 +4,7 @@ from datetime import date
 from scipy.io import loadmat, savemat, whosmat
 from keras import initializers
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, Flatten, Activation, add, Dropout, merge
-from keras.optimizers import Nadam
+from keras.optimizers import Nadam, Adam
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from keras import initializers
@@ -168,8 +168,8 @@ def irfanet(eeg_length,num_classes, kernel_size, load_path):
 	x = Dense(num_classes,activation='softmax',kernel_initializer=initializers.he_normal(seed=1),kernel_constraint=max_norm(maxnorm),use_bias=bias)(x) ##
 	
 	model = Model(EEG_input, x)
-	model.load_weights(filepath=load_path,by_name=False) ### LOAD WEIGHTS
-	adm = Nadam(lr=lr)
+	# model.load_weights(filepath=load_path,by_name=False) ### LOAD WEIGHTS
+	adm = Adam(lr=lr,decay=lr_decay)
 	model.compile(optimizer=adm, loss='categorical_crossentropy', metrics=['accuracy'])
 	return model
 
@@ -192,21 +192,22 @@ if __name__ == '__main__':
 #### INITIALIZE!!
 
 	num_classes = 6
-	batch_size = 8 #8
+	batch_size = 32 #8
 	epochs = 200
 	file_name = 'eog_rk_new_notrans_234rejects_relabeled.mat'
 	eeg_length = 3000
 	kernel_size=16
 	save_dir = os.path.join(os.getcwd(),'saved_models_keras') #os.getcwd() Return a string representing the current working directory
 	model_name = 'keras_1Dconvnet_eog_trained_model.h5'
-	bias=False
+	bias=True
 	maxnorm=4.
-	load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-29/4weights.20-0.8196.hdf5'
-	run_idx=5
+	#load_path='/home/prio/Keras/thesis/irfanet-34/tmp/2017-10-29/4weights.20-0.8196.hdf5'
+	load_path = None
+	run_idx=3
 	dropout_rate=0.2
-	initial_epoch=21
-	lr=1e-5
-	lr_decay=1e-8
+	initial_epoch=0
+	lr=.0001
+	lr_decay=1e-5
 	lr_reduce_factor=0.5 
 	patience=4 #for reduceLR
 	cooldown=0 #for reduceLR
